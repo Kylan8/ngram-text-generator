@@ -1,5 +1,6 @@
 import random
 from collections import Counter, defaultdict
+import math
 
 
 class NGramModel:
@@ -13,6 +14,8 @@ class NGramModel:
         self.vocab = set()
 
     def fit(self, corpus: str):
+        
+        
         self.counts = defaultdict(Counter)
         self.context_totals = Counter
         self.vocab = set(corpus)
@@ -58,6 +61,21 @@ class NGramModel:
             text += next_char
 
         return text
+
+    def perplexity(self, text):
+
+        total = 0
+        count = 0
+
+        for i in range(len(corpus) - self.n):
+            ngram = corpus[i: i+self.n]
+            next_char = corpus[i+self.n]
+
+            total += math.log(self.prob(ngram, next_char))
+            count += 1
+
+        return math.exp(-total / count)
+
 
 if __name__ == "__main__":
     with open("data/LesMis.txt", encoding="utf-8") as f:
