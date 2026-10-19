@@ -4,7 +4,7 @@ import math
 
 
 class NGramModel:
-    def __init__(self, n: int, k = 1):
+    def __init__(self, n: int, k = 0):
         if n < 1:
             raise ValueError("N-gram length must be positive")
 
@@ -31,7 +31,15 @@ class NGramModel:
         return self
 
     def prob(self, context: str, char: str) -> float:
-        return (self.counts[context][char] + self.k) / (self.context_totals[context] + self.k * len(self.vocab))
+        count = self.counts.get(context, {}).get(char, 0)
+        total = self.context_totals[context]
+
+        denominator = total + self.k * len(self.vocab)
+
+        if denominator == 0:
+            return 0.0
+
+        return (count + self.k) / denominator
 
     def generate(self, length: int):
         if not self.counts:
@@ -69,7 +77,7 @@ class NGramModel:
             ngram = text[i: i+self.n]
             next_char = text[i+self.n]
 
-            if (self.prob(ngram, next_char) == 0):
+            if (self.k == 0 and self.counts[ngram][next_char] == 0):
                 return float('inf')
 
             total += math.log(self.prob(ngram, next_char))
@@ -78,20 +86,7 @@ class NGramModel:
         return math.exp(-total / count)
 
 
-if __name__ == "__main__":
-    TRAIN_TEST_SPLIT = 0.9
-   
-    with open("data/LesMis.txt", encoding="utf-8") as f:
-        corpus = f.read().replace("\n", " ")
 
-    split = int(TRAIN_TEST_SPLIT*len(corpus))
-
-    train = corpus[:split]
-    test = corpus[split:]
-
-    bigram_model = NGramModel(2)
-    bigram_model.fit(train)
-    print(bigram_model.perplexity(test))
 
 
     
