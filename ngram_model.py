@@ -4,10 +4,11 @@ import math
 
 
 class NGramModel:
-    def __init__(self, n: int):
+    def __init__(self, n: int, k = 1):
         if n < 1:
             raise ValueError("N-gram length must be positive")
 
+        self.k = k
         self.n = n
         self.counts = defaultdict(Counter)
         self.context_totals = Counter()
@@ -30,19 +31,16 @@ class NGramModel:
         return self
 
     def prob(self, context: str, char: str) -> float:
-        if context not in self.counts:
-            return 0.0
-
-        return self.counts[context][char] / self.context_totals[context]
+        return (self.counts[context][char] + self.k) / (self.context_totals[context] + self.k * len(self.vocab))
 
     def generate(self, length: int):
-        if not self.probs:
+        if not self.counts:
             raise ValueError("Train the model first")
 
         if length < self.n:
             raise ValueError("Length must be >= n")
 
-        text = random.choice(list(self.probs.keys()))
+        text = random.choice(list(self.counts.keys()))
 
         for _ in range(length - self.n):
             ngram = text[-self.n:]
