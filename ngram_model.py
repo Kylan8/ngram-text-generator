@@ -9,27 +9,28 @@ class NGramModel:
 
         self.n = n
         self.counts = defaultdict(Counter)
-        self.probs = {}
+        self.context_totals = Counter()
+        self.vocab = set()
 
     def fit(self, corpus: str):
         self.counts = defaultdict(Counter)
+        self.context_totals = Counter
+        self.vocab = set(corpus)
 
         for i in range(len(corpus) - self.n):
             ngram = corpus[i: i+self.n]
             next_char = corpus[i+self.n]
             self.counts[ngram][next_char] += 1
+            self.context_totals[ngram] += 1
 
-        self.probs = {}
-
-        for ngram, next_chars in self.counts.items():
-            total = sum(next_chars.values())
-
-            self.probs[ngram] = {
-                char: count / total
-                for char, count in next_chars.items()
-            }
 
         return self
+
+    def prob(self, context: str, char: str) -> float:
+        if context not in self.counts:
+            return 0.0
+
+        return self.counts[context][char] / self.context_totals[context]
 
     def generate(self, length: int):
         if not self.probs:
@@ -43,10 +44,10 @@ class NGramModel:
         for _ in range(length - self.n):
             ngram = text[-self.n:]
 
-            if ngram not in self.probs:
+            if ngram not in self.counts:
                 break
 
-            next_chars = self.probs[ngram]
+            next_chars = self.counts[ngram]
 
             next_char = random.choices(
                 list(next_chars.keys()),
