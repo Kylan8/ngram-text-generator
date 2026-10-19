@@ -17,7 +17,7 @@ class NGramModel:
         
         
         self.counts = defaultdict(Counter)
-        self.context_totals = Counter
+        self.context_totals = Counter()
         self.vocab = set(corpus)
 
         for i in range(len(corpus) - self.n):
@@ -67,9 +67,12 @@ class NGramModel:
         total = 0
         count = 0
 
-        for i in range(len(corpus) - self.n):
-            ngram = corpus[i: i+self.n]
-            next_char = corpus[i+self.n]
+        for i in range(len(text) - self.n):
+            ngram = text[i: i+self.n]
+            next_char = text[i+self.n]
+
+            if (self.prob(ngram, next_char) == 0):
+                return float('inf')
 
             total += math.log(self.prob(ngram, next_char))
             count += 1
@@ -78,12 +81,19 @@ class NGramModel:
 
 
 if __name__ == "__main__":
+    TRAIN_TEST_SPLIT = 0.9
+   
     with open("data/LesMis.txt", encoding="utf-8") as f:
         corpus = f.read().replace("\n", " ")
 
+    split = int(TRAIN_TEST_SPLIT*len(corpus))
+
+    train = corpus[:split]
+    test = corpus[split:]
+
     bigram_model = NGramModel(2)
-    bigram_model.fit(corpus)
-    print(bigram_model.generate(100))
+    bigram_model.fit(train)
+    print(bigram_model.perplexity(test))
 
 
     
